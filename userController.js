@@ -2,8 +2,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import sb from "./dbconn.js";
 
-const NOT_SECRET = "abaNuvzp4yFajpPTqFjbkfgytu55l2ulU2F8";
-const REFRESECRET = "h390r0urn3ih2034897t8uw3not8u892907t8y478y2vbo";
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 
 export const registerUser = async (req, res) => {
     const {username, password, email} = req.body;
@@ -42,8 +44,8 @@ export const loginUser = async (req, res) => {
     if(!(await bcrypt.compare(password, dbpwd)))
         res.status(400).json({message: "Wrong password. Try again. Actually, don't try again."})
 
-    const atoken = jwt.sign({email}, NOT_SECRET, {expiresIn: "15m"});
-    const rtoken = jwt.sign({email}, REFRESECRET, {expiresIn: "3200d"});
+    const atoken = jwt.sign({email}, process.env.NOT_SECRET, {expiresIn: "15m"});
+    const rtoken = jwt.sign({email}, process.env.REFRESECRET, {expiresIn: "3200d"});
 
     res.json({atoken, rtoken});
 }
@@ -56,8 +58,8 @@ export const refreshUser = async (req, res) => {
     }
 
     try {
-        const decoded = jwt.verify(rtoken, REFRESECRET);
-        const newatoken = jwt.sign({email: decoded.email}, NOT_SECRET, {expiresIn: "15m"});
+        const decoded = jwt.verify(rtoken, process.env.REFRESECRET);
+        const newatoken = jwt.sign({email: decoded.email}, process.env.NOT_SECRET, {expiresIn: "15m"});
         res.json({atoken: newatoken});
     } catch(err) {
         
@@ -71,7 +73,7 @@ export const verifyToken = (req, res, next) => {
     if(!token) return res.status(401).json({message: "Bad request - no token"});
 
     try{
-        const verified = jwt.verify(token.split(' ')[1], NOT_SECRET);
+        const verified = jwt.verify(token.split(' ')[1], process.env.NOT_SECRET);
         req.user = verified;
         next();
     } catch (err) {
